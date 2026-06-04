@@ -1,532 +1,343 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Máy tính khoa học Hiện đại</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg: #f4f5f0;          /* Màu nền trắng gạo ấm */
-      --surface: #fafafa;     /* Bề mặt chính */
-      --surface2: #f0f1eb;    /* Bề mặt phím số */
-      --surface3: #e4e6dc;    /* Phím chức năng */
-      --border: #e0e2d5;
-      --text: #2a2d34;        /* Chữ chính tối */
-      --text2: #6c727a;
-      --text3: #9da3ab;
-      --blue: #2f69d2;        /* Xanh nhấn công nghệ */
-      --blue-dim: #eef4fe;
-      --red: #dc3545;
-      --red-dim: #fde8e8;
-      --purple: #6f42c1;
-      --purple-dim: #f3f0fa;
-      --radius: 14px;
-      --radius-sm: 8px;
-    }
-
-    body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1.5rem;
-    }
-
-    .app {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      max-width: 440px;
-      background: var(--surface);
-      border-radius: 24px;
-      overflow: hidden;
-      box-shadow: 0 20px 40px rgba(40, 43, 36, 0.08), 0 0 0 1px var(--border);
-    }
-
-    /* ── SCREEN ── */
-    .screen {
-      padding: 24px;
-      background: #fbfbfa;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .screen-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .angle-btn {
-      font-family: 'DM Mono', monospace;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 4px 12px;
-      border-radius: 20px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text2);
-      cursor: pointer;
-      letter-spacing: 0.05em;
-      transition: all .2s;
-    }
-    .angle-btn:hover { border-color: var(--blue); color: var(--blue); }
-    .angle-btn.rad { border-color: var(--blue); color: #fff; background: var(--blue); }
-
-    .expr-display {
-      font-family: 'DM Mono', monospace;
-      font-size: 14px;
-      color: var(--text2);
-      text-align: right;
-      min-height: 20px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      word-break: break-all;
-    }
-
-    .main-display {
-      font-family: 'DM Mono', monospace;
-      font-size: 2.2rem;
-      font-weight: 500;
-      color: var(--text);
-      text-align: right;
-      letter-spacing: -0.02em;
-      line-height: 1.2;
-      word-break: break-all;
-      min-height: 48px;
-    }
-    .main-display.error { color: var(--red); }
-
-    /* ── TABS ── */
-    .tabs {
-      display: flex;
-      background: var(--surface2);
-      padding: 4px;
-      margin: 12px 16px 4px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
-    }
-
-    .tab {
-      flex: 1;
-      padding: 8px 4px;
-      font-size: 12px;
-      font-weight: 600;
-      text-align: center;
-      cursor: pointer;
-      background: transparent;
-      border: none;
-      color: var(--text2);
-      border-radius: 6px;
-      transition: all .15s;
-    }
-    .tab:hover { color: var(--text); }
-    .tab.active { background: var(--surface); color: var(--blue); box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
-
-        /* ── KEYPAD ── */
-        .keys-wrap { padding: 16px; }
-        /* Tìm đoạn này trong CSS của bạn */
-    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-    .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-
-    /* THÊM VÀO ĐOẠN NÀY */
-    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-        .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-
-    .key {
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      min-height: 52px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      background: var(--surface2);
-      color: var(--text);
-      transition: all .1s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-    }
-    .key:hover { background: #e8eae0; border-color: #d2d4c9; }
-    .key:active { transform: scale(0.96); }
-
-    .key.num {
-      background: var(--surface);
-    }
-    .key.num:hover { background: #f3f3f0; }
-
-    .key.span2 { grid-column: span 2; }
-
-    .key.op {
-      background: var(--surface3);
-      color: var(--text);
-      font-size: 18px;
-    }
-    .key.op:hover { background: #dadcd2; }
-
-    .key.fn {
-      font-size: 13px;
-      background: var(--blue-dim);
-      border-color: rgba(47, 105, 210, 0.15);
-      color: var(--blue);
-    }
-    .key.fn:hover { background: rgba(47, 105, 210, 0.12); }
-
-    .key.clear {
-      background: var(--red-dim);
-      border-color: rgba(220, 53, 69, 0.15);
-      color: var(--red);
-    }
-    .key.clear:hover { background: rgba(220, 53, 69, 0.12); }
-
-    .key.eq {
-      background: var(--blue);
-      border-color: var(--blue);
-      color: #fff;
-      font-size: 22px;
-    }
-    .key.eq:hover { background: #2556b3; }
-
-    .key.const-key {
-      flex-direction: column;
-      background: var(--purple-dim);
-      border-color: rgba(111, 66, 193, 0.12);
-    }
-    .key.const-key:hover { background: rgba(111, 66, 193, 0.08); }
-    .key.const-key .sym { font-size: 15px; font-weight: 600; color: var(--purple); }
-    .key.const-key .lbl { font-size: 9px; color: var(--text2); font-weight: 500; margin-top: 1px; }
-
-    .gap-top { margin-top: 10px; }
-
-    @media (max-width: 480px) {
-      body { padding: 0.5rem; }
-      .app { border-radius: 16px; }
-      .key { min-height: 48px; font-size: 14px; }
-    }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1a1c1e;
+  --screen:#0f1012;
+  --s1:#242628;
+  --s2:#2e3032;
+  --s3:#3a3c3e;
+  --border:#3d4045;
+  --text:#e8eaed;
+  --muted:#8a9199;
+  --dim:#5a6068;
+  --blue:#4da6ff;
+  --blue-bg:rgba(77,166,255,0.12);
+  --red:#ff6b6b;
+  --red-bg:rgba(255,107,107,0.12);
+  --green:#5ccf8a;
+  --r:12px;--rs:8px;
+}
+body{font-family:'Outfit',sans-serif;background:var(--bg);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
+.calc{width:100%;max-width:420px;background:var(--s1);border-radius:20px;border:1px solid var(--border);overflow:hidden;box-shadow:0 32px 64px rgba(0,0,0,0.5)}
+.screen{padding:20px 20px 14px;background:var(--screen);border-bottom:1px solid var(--border);min-height:120px;display:flex;flex-direction:column;gap:4px;position:relative}
+.screen-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.mode-badge{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.08em;padding:3px 10px;border-radius:20px;cursor:pointer;transition:all .2s;background:var(--s2);color:var(--muted);border:1px solid var(--border)}
+.mode-badge.rad{background:var(--blue-bg);color:var(--blue);border-color:rgba(77,166,255,0.25)}
+.history-line{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--dim);text-align:right;min-height:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.main-line{font-family:'JetBrains Mono',monospace;font-size:2rem;font-weight:500;color:var(--text);text-align:right;word-break:break-all;line-height:1.25;min-height:50px;display:flex;align-items:flex-end;justify-content:flex-end}
+.main-line.error{color:var(--red);font-size:1.1rem;font-weight:400}
+.cursor{display:inline-block;width:2px;height:1.1em;background:var(--blue);margin-left:2px;border-radius:1px;vertical-align:text-bottom;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.tabs{display:flex;padding:8px 12px 0;background:var(--s1);gap:4px}
+.tab{flex:1;padding:8px 4px;font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:transparent;border:none;color:var(--muted);border-bottom:2px solid transparent;transition:all .15s;font-family:'Outfit',sans-serif}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.keys{padding:14px}
+.row{display:flex;gap:8px;margin-bottom:8px}
+.row:last-child{margin-bottom:0}
+.k{flex:1;border:1px solid var(--border);border-radius:var(--rs);min-height:48px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;background:var(--s2);color:var(--text);transition:background .1s,transform .08s;display:flex;align-items:center;justify-content:center;user-select:none;gap:3px;position:relative;white-space:nowrap}
+.k:hover{background:var(--s3)}
+.k:active{transform:scale(0.94);background:#404448}
+.k.w2{flex:2}
+.k.num{background:#20232b;border-color:#30333d}
+.k.num:hover{background:#262933}
+.k.op{background:var(--s3);font-size:18px}
+.k.op:hover{background:#464a4f}
+.k.fn{background:var(--blue-bg);border-color:rgba(77,166,255,0.2);color:var(--blue);font-size:12px;font-weight:600}
+.k.fn:hover{background:rgba(77,166,255,0.18)}
+.k.clear{background:var(--red-bg);border-color:rgba(255,107,107,0.2);color:var(--red)}
+.k.clear:hover{background:rgba(255,107,107,0.18)}
+.k.eq{background:var(--blue);border-color:var(--blue);color:#fff;font-size:20px;font-weight:700}
+.k.eq:hover{background:#3a90e0}
+.k.const{flex-direction:column;background:rgba(92,207,138,0.08);border-color:rgba(92,207,138,0.15);color:var(--green)}
+.k.const:hover{background:rgba(92,207,138,0.13)}
+.k.const .sym{font-size:15px;font-weight:700}
+.k.const .lbl{font-size:9px;font-weight:500;color:var(--muted);margin-top:1px}
+sup{font-size:0.65em;vertical-align:super}
+</style>
 </head>
 <body>
-
-  <div class="app">
-    <div class="screen">
-      <div class="screen-top">
-        <button class="angle-btn" id="angleBtn" onclick="toggleAngle()">DEG</button>
-        <div class="expr-display" id="exprLine"></div>
-      </div>
-      <div class="main-display" id="display">0</div>
+<div class="calc">
+  <div class="screen">
+    <div class="screen-meta">
+      <button class="mode-badge" id="modeBtn" onclick="toggleAngle()">DEG</button>
+      <div class="history-line" id="histLine"></div>
     </div>
-
-    <div class="tabs">
-      <button class="tab active" onclick="setMode('basic')">Cơ bản</button>
-      <button class="tab" onclick="setMode('sci')">Khoa học</button>
-      <button class="tab" onclick="setMode('const')">Hằng số</button>
+    <div class="main-line" id="mainDisp">
+      <span id="dispText">0</span><span class="cursor"></span>
     </div>
-
-    <div class="keys-wrap" id="keysArea"></div>
   </div>
+  <div class="tabs">
+    <button class="tab active" onclick="setTab('basic',this)">Cơ bản</button>
+    <button class="tab" onclick="setTab('sci',this)">Khoa học</button>
+    <button class="tab" onclick="setTab('const',this)">Hằng số</button>
+  </div>
+  <div class="keys" id="keysArea"></div>
+</div>
 
 <script>
-let curInput = '0'; 
-let angleMode = 'deg';
-let curMode = 'basic';
-let isEvaluated = false;
+// ── STATE ──
+let expr = '';
+let mathExpr = '';
+let isResult = false;
+let angleDeg = true;
+let curTab = 'basic';
+let tokens = [];
 
-const $display = document.getElementById('display');
-const $expr = document.getElementById('exprLine');
+const $disp = document.getElementById('dispText');
+const $hist = document.getElementById('histLine');
+const $main = document.getElementById('mainDisp');
 
-// Bản đồ ánh xạ hiển thị trực quan sang cú pháp JavaScript Math toán học
-const tokenMap = {
-  '×': '*', '÷': '/', 'π': 'Math.PI', 'e': 'Math.E', 'φ': '1.61803398874989',
-  '√2': 'Math.SQRT2', '√3': 'Math.sqrt(3)', '√5': 'Math.sqrt(5)', 'ln2': 'Math.LN2',
-  'ln10': 'Math.LN10', 'g': '9.80665', 'c': '299792458', 'γ': '0.57721566490153', '1/e': '(1/Math.E)'
-};
-
-function updateDisplay() {
-  $display.textContent = curInput;
+function renderDisplay() {
+  $main.classList.remove('error');
+  $disp.textContent = expr || '0';
 }
 
-function inp(v) {
-  if (curInput === '0' && v !== '.' && !isOperator(v)) {
-    curInput = v;
-  } else if (isEvaluated && !isOperator(v)) {
-    curInput = v;
-  } else {
-    curInput += v;
-  }
-  isEvaluated = false;
-  updateDisplay();
-}
-
-function isOperator(c) {
-  return ['+', '-', '×', '÷'].includes(c);
-}
-
-function inpFn(fnSymbol) {
-  if (curInput === '0' || isEvaluated) {
-    curInput = fnSymbol;
-  } else {
-    const lastChar = curInput.slice(-1);
-    if (isOperator(lastChar) || lastChar === '(') {
-      curInput += fnSymbol;
+// ── INPUT SYSTEM (token đôi: display vs math) ──
+function addToken(display, math) {
+  if (isResult) {
+    if (['+','−','×','÷','^'].includes(display)) {
+      // tiếp tục từ kết quả
     } else {
-      curInput += '×' + fnSymbol;
+      tokens = []; expr = ''; mathExpr = '';
     }
+    isResult = false;
   }
-  isEvaluated = false;
-  updateDisplay();
+  tokens.push({ display, math });
+  expr += display;
+  mathExpr += math;
+  renderDisplay();
 }
 
-function clearAll() {
-  curInput = '0';
-  $expr.textContent = '';
-  isEvaluated = false;
-  updateDisplay();
+function addNum(n)          { addToken(n, n); }
+function addOp(disp, math)  { addToken(disp, math); }
+function addFn(name, jsName){ addToken(name, jsName); }
+
+function addConst(disp, mathVal) {
+  if (isResult) { tokens=[]; expr=''; mathExpr=''; isResult=false; }
+  addToken(disp, mathVal);
 }
 
 function backspace() {
-  if (isEvaluated) {
-    clearAll();
-    return;
-  }
-  
-  // Xóa nguyên cụm tên hàm nếu nhấn Backspace
-  const fns = ['sin(', 'cos(', 'tan(', 'asin(', 'acos(', 'atan(', 'log(', 'ln(', 'sqrt(', 'cbrt(', 'abs(', 'floor(', 'ceil(', 'round('];
-  for (let f of fns) {
-    if (curInput.endsWith(f)) {
-      curInput = curInput.slice(0, -f.length) || '0';
-      updateDisplay();
-      return;
-    }
-  }
+  if (isResult) { clearAll(); return; }
+  if (tokens.length === 0) return;
+  const last = tokens.pop();
+  expr = expr.slice(0, -last.display.length);
+  mathExpr = mathExpr.slice(0, -last.math.length);
+  renderDisplay();
+}
 
-  if (curInput.length <= 1) curInput = '0';
-  else curInput = curInput.slice(0, -1);
-  updateDisplay();
+function clearAll() {
+  tokens=[]; expr=''; mathExpr='';
+  isResult=false;
+  $hist.textContent='';
+  $main.classList.remove('error');
+  $disp.textContent='0';
 }
 
 function negate() {
-  if (curInput !== '0' && !isEvaluated) {
-    if (curInput.startsWith('-')) curInput = curInput.slice(1);
-    else curInput = '-' + curInput;
-    updateDisplay();
-  }
+  if (tokens.length === 0) return;
+  const d = '-('+expr+')';
+  const m = '-('+mathExpr+')';
+  tokens = [{display:d, math:m}];
+  expr=d; mathExpr=m;
+  renderDisplay();
 }
 
 function toggleAngle() {
-  angleMode = angleMode === 'deg' ? 'rad' : 'deg';
-  const b = document.getElementById('angleBtn');
-  b.textContent = angleMode.toUpperCase();
-  b.classList.toggle('rad', angleMode === 'rad');
+  angleDeg = !angleDeg;
+  const b = document.getElementById('modeBtn');
+  b.textContent = angleDeg ? 'DEG' : 'RAD';
+  b.classList.toggle('rad', !angleDeg);
 }
 
-function parseToMathJS(str) {
-  let res = str;
-  // Thay thế các hằng số và toán tử cơ bản
-  for (let [k, v] of Object.entries(tokenMap)) {
-    res = res.replaceAll(k, v);
-  }
-
-  // Xử lý Giai thừa (X!) tạm thời bằng regex đơn giản gọn nhẹ cho n nguyên
-  res = res.replace(/(\d+)!/g, function(match, num) {
-    let r = 1;
-    for (let i = 2; i <= parseInt(num); i++) r *= i;
-    return r;
-  });
-
-  // Thay thế các hàm lượng giác cần tính theo DEG/RAD
-  const factor = angleMode === 'deg' ? `* (Math.PI / 180)` : '';
-  const invFactor = angleMode === 'deg' ? `* (180 / Math.PI)` : '';
-
-  res = res.replaceAll(/sin\(([^)]+)\)/g, `Math.sin(($1)${factor})`);
-  res = res.replaceAll(/cos\(([^)]+)\)/g, `Math.cos(($1)${factor})`);
-  res = res.replaceAll(/tan\(([^)]+)\)/g, `Math.tan(($1)${factor})`);
-  
-  res = res.replaceAll(/asin\(([^)]+)\)/g, `(Math.asin($1)${invFactor})`);
-  res = res.replaceAll(/acos\(([^)]+)\)/g, `(Math.acos($1)${invFactor})`);
-  res = res.replaceAll(/atan\(([^)]+)\)/g, `(Math.atan($1)${invFactor})`);
-
-  // Các hàm toán học cơ bản khác
-  res = res.replaceAll('log(', 'Math.log10(');
-  res = res.replaceAll('ln(', 'Math.log(');
-  res = res.replaceAll('sqrt(', 'Math.sqrt(');
-  res = res.replaceAll('cbrt(', 'Math.cbrt(');
-  res = res.replaceAll('abs(', 'Math.abs(');
-  res = res.replaceAll('floor(', 'Math.floor(');
-  res = res.replaceAll('ceil(', 'Math.ceil(');
-  res = res.replaceAll('round(', 'Math.round(');
-
-  return res;
-}
-
+// ── EVALUATE ──
 function calculate() {
+  if (!expr) return;
   try {
-    let textToEval = curInput;
-    
-    // Tự động đóng các dấu ngoặc còn thiếu
-    let openBrackets = (textToEval.match(/\(/g) || []).length;
-    let closeBrackets = (textToEval.match(/\)/g) || []).length;
-    while (openBrackets > closeBrackets) {
-      textToEval += ')';
-      closeBrackets++;
+    let js = mathExpr;
+
+    // Tự động đóng ngoặc còn thiếu
+    const opens  = (js.match(/\(/g)||[]).length;
+    const closes = (js.match(/\)/g)||[]).length;
+    js += ')'.repeat(Math.max(0, opens - closes));
+
+    // Áp dụng chế độ góc khi tính
+    if (angleDeg) {
+      js = js.replace(/__SIN__\(/g,  'Math.sin(Math.PI/180*');
+      js = js.replace(/__COS__\(/g,  'Math.cos(Math.PI/180*');
+      js = js.replace(/__TAN__\(/g,  'Math.tan(Math.PI/180*');
+      js = js.replace(/__ASIN__\(/g, '(180/Math.PI)*Math.asin(');
+      js = js.replace(/__ACOS__\(/g, '(180/Math.PI)*Math.acos(');
+      js = js.replace(/__ATAN__\(/g, '(180/Math.PI)*Math.atan(');
+    } else {
+      js = js.replace(/__SIN__\(/g,  'Math.sin(');
+      js = js.replace(/__COS__\(/g,  'Math.cos(');
+      js = js.replace(/__TAN__\(/g,  'Math.tan(');
+      js = js.replace(/__ASIN__\(/g, 'Math.asin(');
+      js = js.replace(/__ACOS__\(/g, 'Math.acos(');
+      js = js.replace(/__ATAN__\(/g, 'Math.atan(');
     }
 
-    let jsFormula = parseToMathJS(textToEval);
-    let result = eval(jsFormula);
+    let result = eval(js);
+    if (!isFinite(result) || isNaN(result)) throw new Error('undefined');
 
-    if (typeof result === 'number') {
-      if (!isFinite(result)) throw new Error();
-      // Format kết quả hiển thị tinh gọn số thập phân
-      result = parseFloat(result.toPrecision(12)).toString();
+    // Định dạng kết quả
+    let displayResult;
+    const abs = Math.abs(result);
+    if (abs !== 0 && (abs >= 1e15 || abs < 1e-10)) {
+      displayResult = result.toExponential(6).replace(/\.?0+e/, 'e');
+    } else {
+      displayResult = parseFloat(result.toPrecision(12)).toString();
     }
 
-    $expr.textContent = textToEval + ' =';
-    curInput = String(result);
-    isEvaluated = true;
-    updateDisplay();
-  } catch (e) {
-    $display.textContent = 'Lỗi cú pháp';
-    isEvaluated = true;
-    curInput = '0';
+    $hist.textContent = expr + ' =';
+    tokens = [{ display: displayResult, math: displayResult }];
+    expr = displayResult; mathExpr = displayResult;
+    isResult = true;
+    renderDisplay();
+  } catch(e) {
+    $main.classList.add('error');
+    $disp.textContent = 'Lỗi';
+    isResult = true;
+    tokens=[]; expr=''; mathExpr='';
   }
 }
 
-/* ── LAYOUT PHÍM BẤM MÁY TÍNH BỎ TÚI ── */
-function btn(label, cls, action) {
-  return `<button class="key ${cls}" onclick="${action}">${label}</button>`;
+// ── RENDER PHÍM BẤM ──
+function h(label, cls, fn) {
+  return `<button class="k ${cls}" onclick="${fn}">${label}</button>`;
 }
 
 function renderKeys() {
   const el = document.getElementById('keysArea');
-  if (curMode === 'basic') {
-    el.innerHTML = `<div class="grid-4">
-      ${btn('AC', 'clear', 'clearAll()')}
-      ${btn('⌫', '', 'backspace()')}
-      ${btn('+/−', '', 'negate()')}
-      ${btn('÷', 'op', "inp('÷')")}
-      
-      ${btn('7', 'num', "inp('7')")}${btn('8', 'num', "inp('8')")}${btn('9', 'num', "inp('9')")}
-      ${btn('×', 'op', "inp('×')")}
-      
-      ${btn('4', 'num', "inp('4')")}${btn('5', 'num', "inp('5')")}${btn('6', 'num', "inp('6')")}
-      ${btn('−', 'op', "inp('-')")}
-      
-      ${btn('1', 'num', "inp('1')")}${btn('2', 'num', "inp('2')")}${btn('3', 'num', "inp('3')")}
-      ${btn('+', 'op', "inp('+')")}
-      
-      ${btn('0', 'num span2', "inp('0')")}
-      ${btn('.', 'num', "inp('.')")}
-      ${btn('=', 'eq', 'calculate()')}
-    </div>`;
-  } else if (curMode === 'sci') {
-    el.innerHTML = `<div class="grid-5">
-      ${btn('sin', 'fn', "inpFn('sin(')")}
-      ${btn('cos', 'fn', "inpFn('cos(')")}
-      ${btn('tan', 'fn', "inpFn('tan(')")}
-      ${btn('(', 'op', "inp('(')")}
-      ${btn(')', 'op', "inp(')')")}
 
-      ${btn('sin⁻¹', 'fn', "inpFn('asin(')")}
-      ${btn('cos⁻¹', 'fn', "inpFn('acos(')")}
-      ${btn('tan⁻¹', 'fn', "inpFn('atan(')")}
-      ${btn('ln', 'fn', "inpFn('ln(')")}
-      ${btn('log', 'fn', "inpFn('log(')")}
-
-      ${btn('√x', 'fn', "inpFn('sqrt(')")}
-      ${btn('∛x', 'fn', "inpFn('cbrt(')")}
-      ${btn('x²', 'fn', "inp('**2')")}
-      ${btn('x³', 'fn', "inp('**3')")}
-      ${btn('n!', 'fn', "inp('!')")}
-
-      ${btn('⌊x⌋', 'fn', "inpFn('floor(')")}
-      ${btn('⌈x⌉', 'fn', "inpFn('ceil(')")}
-      ${btn('|x|', 'fn', "inpFn('abs(')")}
-      ${btn('1/x', 'fn', "inpFn('1/(')")}
-      ${btn('%', 'fn', "inp('/100')")}
+  const numpad = `
+    <div class="row">
+      ${h('AC','clear','clearAll()')}
+      ${h('⌫','','backspace()')}
+      ${h('+/−','','negate()')}
+      ${h('÷','op',"addOp('÷','/')")}
     </div>
-    <div class="grid-4 gap-top">
-      ${btn('AC', 'clear', 'clearAll()')}
-      ${btn('⌫', '', 'backspace()')}
-      ${btn('+/−', '', 'negate()')}
-      ${btn('÷', 'op', "inp('÷')")}
-      
-      ${btn('7', 'num', "inp('7')")}${btn('8', 'num', "inp('8')")}${btn('9', 'num', "inp('9')")}
-      ${btn('×', 'op', "inp('×')")}
-      
-      ${btn('4', 'num', "inp('4')")}${btn('5', 'num', "inp('5')")}${btn('6', 'num', "inp('6')")}
-      ${btn('−', 'op', "inp('-')")}
-      
-      ${btn('1', 'num', "inp('1')")}${btn('2', 'num', "inp('2')")}${btn('3', 'num', "inp('3')")}
-      ${btn('+', 'op', "inp('+')")}
-      
-      ${btn('0', 'num span2', "inp('0')")}
-      ${btn('.', 'num', "inp('.')")}
-      ${btn('=', 'eq', 'calculate()')}
+    <div class="row">
+      ${h('7','num',"addNum('7')")}${h('8','num',"addNum('8')")}${h('9','num',"addNum('9')")}
+      ${h('×','op',"addOp('×','*')")}
+    </div>
+    <div class="row">
+      ${h('4','num',"addNum('4')")}${h('5','num',"addNum('5')")}${h('6','num',"addNum('6')")}
+      ${h('−','op',"addOp('−','-')")}
+    </div>
+    <div class="row">
+      ${h('1','num',"addNum('1')")}${h('2','num',"addNum('2')")}${h('3','num',"addNum('3')")}
+      ${h('+','op',"addOp('+','+')")}
+    </div>
+    <div class="row">
+      ${h('0','num w2',"addNum('0')")}
+      ${h('.','num',"addNum('.')")}
+      ${h('=','eq','calculate()')}
     </div>`;
+
+  if (curTab === 'basic') {
+    el.innerHTML = numpad;
+  } else if (curTab === 'sci') {
+    el.innerHTML = `
+    <div class="row">
+      ${h('sin','fn',"addFn('sin(','__SIN__(')")}
+      ${h('cos','fn',"addFn('cos(','__COS__(')")}
+      ${h('tan','fn',"addFn('tan(','__TAN__(')")}
+      ${h('(','op',"addOp('(','(')")}
+      ${h(')','op',"addOp(')',')')")}
+    </div>
+    <div class="row">
+      ${h('sin<sup>−1</sup>','fn',"addFn('arcsin(','__ASIN__(')")}
+      ${h('cos<sup>−1</sup>','fn',"addFn('arccos(','__ACOS__(')")}
+      ${h('tan<sup>−1</sup>','fn',"addFn('arctan(','__ATAN__(')")}
+      ${h('ln','fn',"addFn('ln(','Math.log(')")}
+      ${h('log','fn',"addFn('log(','Math.log10(')")}
+    </div>
+    <div class="row">
+      ${h('√x','fn',"addFn('√(','Math.sqrt(')")}
+      ${h('∛x','fn',"addFn('∛(','Math.cbrt(')")}
+      ${h('x<sup>2</sup>','fn',"addOp('²','**2')")}
+      ${h('x<sup>y</sup>','fn',"addOp('^','**')")}
+      ${h('n!','fn',"addFn('fact(','factorial(')")}
+    </div>
+    <div class="row">
+      ${h('⌊x⌋','fn',"addFn('floor(','Math.floor(')")}
+      ${h('⌈x⌉','fn',"addFn('ceil(','Math.ceil(')")}
+      ${h('|x|','fn',"addFn('|x|(','Math.abs(')")}
+      ${h('1/x','fn',"addOp('1÷','1/')")}
+      ${h('%','fn',"addOp('%','/100')")}
+    </div>
+    ${numpad}`;
   } else {
     const consts = [
-      {sym:'π', lbl:'Pi'}, {sym:'e', lbl:'Euler'}, {sym:'φ', lbl:'Tỉ lệ vàng'},
-      {sym:'√2', lbl:'Căn 2'}, {sym:'√3', lbl:'Căn 3'}, {sym:'√5', lbl:'Căn 5'},
-      {sym:'g', lbl:'Gia tốc g'}, {sym:'c', lbl:'Vận tốc c'}, {sym:'1/e', lbl:'1/e'}
+      {sym:'π',   lbl:'Pi 3.14159…',        m:'Math.PI'},
+      {sym:'e',   lbl:'Euler 2.71828…',      m:'Math.E'},
+      {sym:'φ',   lbl:'Tỉ lệ vàng',          m:'1.6180339887'},
+      {sym:'√2',  lbl:'Căn hai',             m:'Math.SQRT2'},
+      {sym:'√3',  lbl:'Căn ba',              m:'Math.sqrt(3)'},
+      {sym:'√5',  lbl:'Căn năm',             m:'Math.sqrt(5)'},
+      {sym:'g',   lbl:'9.80665 m/s²',        m:'9.80665'},
+      {sym:'c',   lbl:'3×10⁸ m/s',           m:'299792458'},
+      {sym:'ln2', lbl:'0.69314…',            m:'Math.LN2'},
+      {sym:'ln10',lbl:'2.30258…',            m:'Math.LN10'},
+      {sym:'γ',   lbl:'Euler–Mascheroni',    m:'0.5772156649'},
+      {sym:'1/e', lbl:'0.36787…',            m:'(1/Math.E)'},
     ];
-    el.innerHTML = `<div class="grid-3">
-      ${consts.map(c => `<button class="key const-key" onclick="inp('${c.sym}')">
-        <span class="sym">${c.sym}</span>
-        <span class="lbl">${c.lbl}</span>
-      </button>`).join('')}
-    </div>
-    <div class="grid-4 gap-top">
-      ${btn('AC', 'clear', 'clearAll()')}
-      ${btn('⌫', '', 'backspace()')}
-      ${btn('+/−', '', 'negate()')}
-      ${btn('÷', 'op', "inp('÷')")}
-      
-      ${btn('7', 'num', "inp('7')")}${btn('8', 'num', "inp('8')")}${btn('9', 'num', "inp('9')")}
-      ${btn('×', 'op', "inp('×')")}
-      
-      ${btn('4', 'num', "inp('4')")}${btn('5', 'num', "inp('5')")}${btn('6', 'num', "inp('6')")}
-      ${btn('−', 'op', "inp('-')")}
-      
-      ${btn('1', 'num', "inp('1')")}${btn('2', 'num', "inp('2')")}${btn('3', 'num', "inp('3')")}
-      ${btn('+', 'op', "inp('+')")}
-      
-      ${btn('0', 'num span2', "inp('0')")}
-      ${btn('.', 'num', "inp('.')")}
-      ${btn('=', 'eq', 'calculate()')}
-    </div>`;
+    const rows = [];
+    for (let i = 0; i < consts.length; i += 4) {
+      const chunk = consts.slice(i, i+4);
+      rows.push(`<div class="row">${chunk.map(c =>
+        `<button class="k const" onclick="addConst('${c.sym}','${c.m}')">
+          <span class="sym">${c.sym}</span>
+          <span class="lbl">${c.lbl}</span>
+        </button>`).join('')}</div>`);
+    }
+    el.innerHTML = rows.join('') + numpad;
+  }
+
+  // Hàm giai thừa
+  if (!window._factInjected) {
+    window.factorial = function(n) {
+      n = Math.round(n);
+      if (n < 0 || n > 170) return NaN;
+      if (n <= 1) return 1;
+      let r = 1;
+      for (let i = 2; i <= n; i++) r *= i;
+      return r;
+    };
+    window._factInjected = true;
   }
 }
 
-function setMode(m) {
-  curMode = m;
-  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', ['basic', 'sci', 'const'][i] === m));
+function setTab(name, el) {
+  curTab = name;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
   renderKeys();
 }
 
-// Bắt sự kiện bàn phím máy tính PC
+// ── PHÍM BÀN PHÍM PC ──
 document.addEventListener('keydown', e => {
-  if (e.ctrlKey || e.metaKey || e.altKey) return;
-  if (/\d/.test(e.key)) inp(e.key);
-  else if (e.key === '.') inp('.');
-  else if (e.key === 'Enter' || e.key === '=') calculate();
-  else if (e.key === 'Backspace') backspace();
-  else if (e.key === 'Escape') clearAll();
-  else if (e.key === '+') inp('+');
-  else if (e.key === '-') inp('-');
-  else if (e.key === '*') inp('×');
-  else if (e.key === '/') inp('÷');
+  if (e.ctrlKey||e.metaKey||e.altKey) return;
+  if (/^[0-9]$/.test(e.key)) addNum(e.key);
+  else if (e.key==='.') addNum('.');
+  else if (e.key==='+') addOp('+','+');
+  else if (e.key==='-') addOp('−','-');
+  else if (e.key==='*') addOp('×','*');
+  else if (e.key==='/') { e.preventDefault(); addOp('÷','/'); }
+  else if (e.key==='(') addOp('(','(');
+  else if (e.key===')') addOp(')','');
+  else if (e.key==='Enter'||e.key==='=') calculate();
+  else if (e.key==='Backspace') backspace();
+  else if (e.key==='Escape') clearAll();
 });
 
 renderKeys();
