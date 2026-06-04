@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modern Calculator</title>
+  <style>
+    :root {
+      --bg: #0c0f14;
+      --panel: #141a24;
+      --display: #0b1220;
+      --text: #eef2ff;
+      --muted: #96a0b5;
+      --accent: #38bdf8;
+      --accent-2: #34d399;
+      --danger: #f43f5e;
+      --button: #1a2333;
+      --button-hover: #233048;
+      --button-active: #1b2638;
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(circle at 20% 20%, #101828 0%, var(--bg) 55%);
+      color: var(--text);
+    }
+
+    .calculator {
+      width: min(100%, 380px);
+      background: linear-gradient(165deg, #151e2d 0%, #101722 100%);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 22px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .display {
+      background: var(--display);
+      border-radius: 14px;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      padding: 18px 14px;
+      margin-bottom: 14px;
+      min-height: 92px;
+      display: grid;
+      align-content: end;
+      gap: 6px;
+      overflow: hidden;
+    }
+
+    .expression {
+      text-align: right;
+      color: var(--muted);
+      min-height: 20px;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .result {
+      text-align: right;
+      font-size: clamp(2rem, 7vw, 2.6rem);
+      line-height: 1.1;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .keys {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      min-height: 58px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--button);
+      cursor: pointer;
+      transition: transform 0.08s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+      box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    button:hover {
+      background: var(--button-hover);
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(1px) scale(0.99);
+      background: var(--button-active);
+    }
+
+    .operator {
+      color: #e0f2fe;
+      background: #1c2940;
+    }
+
+    .operator:hover {
+      background: #253756;
+    }
+
+    .accent {
+      color: #032536;
+      background: linear-gradient(135deg, var(--accent), #22d3ee);
+    }
+
+    .accent:hover {
+      background: linear-gradient(135deg, #67d7ff, #3be7ff);
+    }
+
+    .danger {
+      background: #3c1822;
+      color: #fecdd3;
+    }
+
+    .danger:hover {
+      background: #51202f;
+    }
+
+    .zero {
+      grid-column: span 2;
+    }
+
+    @media (max-width: 420px) {
+      .calculator {
+        border-radius: 18px;
+        padding: 12px;
+      }
+
+      button {
+        min-height: 54px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="calculator" aria-label="Calculator">
+    <section class="display" aria-live="polite">
+      <div id="expression" class="expression"></div>
+      <div id="result" class="result">0</div>
+    </section>
+
+    <section class="keys">
+      <button type="button" class="danger" data-action="clear">AC</button>
+      <button type="button" data-action="backspace">⌫</button>
+      <button type="button" class="operator" data-operator="/">÷</button>
+      <button type="button" class="operator" data-operator="*">×</button>
+
+      <button type="button" data-number="7">7</button>
+      <button type="button" data-number="8">8</button>
+      <button type="button" data-number="9">9</button>
+      <button type="button" class="operator" data-operator="-">−</button>
+
+      <button type="button" data-number="4">4</button>
+      <button type="button" data-number="5">5</button>
+      <button type="button" data-number="6">6</button>
+      <button type="button" class="operator" data-operator="+">+</button>
+
+      <button type="button" data-number="1">1</button>
+      <button type="button" data-number="2">2</button>
+      <button type="button" data-number="3">3</button>
+      <button type="button" class="accent" data-action="equals">=</button>
+
+      <button type="button" class="zero" data-number="0">0</button>
+      <button type="button" data-number=".">.</button>
+    </section>
+  </main>
+
+  <script>
+    // Convert a decimal string into a fraction (numerator/denominator).
+    function toFraction(value) {
+      let s = value.trim();
+      let sign = 1n;
+      if (s.startsWith("-")) {
+        sign = -1n;
+        s = s.slice(1);
+      }
+      if (!s.includes(".")) {
+        return { n: sign * BigInt(s || "0"), d: 1n };
+      }
+
+      const [whole, decimal] = s.split(".");
+      const digits = decimal.length;
+      const denominator = 10n ** BigInt(digits);
+      const numerator = BigInt((whole || "0") + decimal);
+      return reduceFraction({ n: sign * numerator, d: denominator });
+    }
+
+    function gcd(a, b) {
+      let x = a < 0n ? -a : a;
+      let y = b < 0n ? -b : b;
+      while (y !== 0n) {
+        const t = y;
+        y = x % y;
+        x = t;
+      }
+      return x || 1n;
+    }
+
+    function reduceFraction(f) {
+      if (f.n === 0n) return { n: 0n, d: 1n };
+      const sign = f.d < 0n ? -1n : 1n;
+      const n = f.n * sign;
+      const d = f.d * sign;
+      const g = gcd(n, d);
+      return { n: n / g, d: d / g };
+    }
+
+    function add(a, b) {
+      return reduceFraction({ n: a.n * b.d + b.n * a.d, d: a.d * b.d });
+    }
+
+    function subtract(a, b) {
+      return reduceFraction({ n: a.n * b.d - b.n * a.d, d: a.d * b.d });
+    }
+
+    function multiply(a, b) {
+      return reduceFraction({ n: a.n * b.n, d: a.d * b.d });
+    }
+
+    function divide(a, b) {
+      if (b.n === 0n) return null;
+      return reduceFraction({ n: a.n * b.d, d: a.d * b.n });
+    }
+
+    // Convert a fraction to a clean decimal string for display.
+    function fractionToDecimalString(f) {
+      const reduced = reduceFraction(f);
+      const negative = reduced.n < 0n;
+      let numerator = negative ? -reduced.n : reduced.n;
+      const denominator = reduced.d;
+
+      const integerPart = numerator / denominator;
+      let remainder = numerator % denominator;
+      if (remainder === 0n) return `${negative ? "-" : ""}${integerPart.toString()}`;
+
+      const decimals = [];
+      const seen = new Map();
+      while (remainder !== 0n && decimals.length < 40) {
+        if (seen.has(remainder)) break;
+        seen.set(remainder, decimals.length);
+        remainder *= 10n;
+        decimals.push((remainder / denominator).toString());
+        remainder %= denominator;
+      }
+
+      const decimalPart = decimals.join("").replace(/0+$/, "") || "0";
+      return `${negative ? "-" : ""}${integerPart.toString()}.${decimalPart}`;
+    }
+
+    function evaluate(left, operator, right) {
+      const a = toFraction(left);
+      const b = toFraction(right);
+      switch (operator) {
+        case "+":
+          return add(a, b);
+        case "-":
+          return subtract(a, b);
+        case "*":
+          return multiply(a, b);
+        case "/":
+          return divide(a, b);
+        default:
+          return null;
+      }
+    }
+
+    const state = {
+      current: "0",
+      previous: null,
+      operator: null,
+      shouldResetCurrent: false
+    };
+
+    const resultEl = document.getElementById("result");
+    const expressionEl = document.getElementById("expression");
+
+    function updateDisplay() {
+      resultEl.textContent = state.current;
+      expressionEl.textContent = state.previous && state.operator
+        ? `${state.previous} ${symbol(state.operator)}`
+        : "";
+    }
+
+    function symbol(op) {
+      if (op === "*") return "×";
+      if (op === "/") return "÷";
+      return op;
+    }
+
+    function inputNumber(value) {
+      if (state.shouldResetCurrent) {
+        state.current = value === "." ? "0." : value;
+        state.shouldResetCurrent = false;
+        return updateDisplay();
+      }
+
+      if (value === ".") {
+        if (!state.current.includes(".")) state.current += ".";
+        return updateDisplay();
+      }
+
+      state.current = state.current === "0" ? value : state.current + value;
+      updateDisplay();
+    }
+
+    function setOperator(op) {
+      if (state.operator && !state.shouldResetCurrent) {
+        compute();
+      }
+      state.previous = state.current;
+      state.operator = op;
+      state.shouldResetCurrent = true;
+      updateDisplay();
+    }
+
+    function compute() {
+      if (!state.operator || state.previous === null) return;
+      const output = evaluate(state.previous, state.operator, state.current);
+      if (!output) {
+        state.current = "Error";
+        state.previous = null;
+        state.operator = null;
+        state.shouldResetCurrent = true;
+        return updateDisplay();
+      }
+
+      state.current = fractionToDecimalString(output);
+      state.previous = null;
+      state.operator = null;
+      state.shouldResetCurrent = true;
+      updateDisplay();
+    }
+
+    function backspace() {
+      if (state.shouldResetCurrent || state.current === "Error") {
+        state.current = "0";
+        state.shouldResetCurrent = false;
+        return updateDisplay();
+      }
+      if (state.current.length <= 1 || (state.current.length === 2 && state.current.startsWith("-"))) {
+        state.current = "0";
+      } else {
+        state.current = state.current.slice(0, -1);
+      }
+      updateDisplay();
+    }
+
+    function clearAll() {
+      state.current = "0";
+      state.previous = null;
+      state.operator = null;
+      state.shouldResetCurrent = false;
+      updateDisplay();
+    }
+
+    document.querySelector(".keys").addEventListener("click", (event) => {
+      const btn = event.target.closest("button");
+      if (!btn) return;
+
+      if (btn.dataset.number !== undefined) inputNumber(btn.dataset.number);
+      if (btn.dataset.operator) setOperator(btn.dataset.operator);
+      if (btn.dataset.action === "equals") compute();
+      if (btn.dataset.action === "clear") clearAll();
+      if (btn.dataset.action === "backspace") backspace();
+    });
+
+    clearAll();
+  </script>
+</body>
+</html>
