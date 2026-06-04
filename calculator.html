@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Máy tính khoa học</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0e0f13;
+      --surface: #16181f;
+      --surface2: #1d2029;
+      --surface3: #252836;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.12);
+      --text: #f0f2ff;
+      --text2: #8b91a8;
+      --text3: #555b72;
+      --blue: #4e8ef7;
+      --blue-dim: rgba(78,142,247,0.15);
+      --teal: #33d9b0;
+      --teal-dim: rgba(51,217,176,0.13);
+      --red: #f76e6e;
+      --red-dim: rgba(247,110,110,0.13);
+      --amber: #f5a623;
+      --amber-dim: rgba(245,166,35,0.13);
+      --purple: #a78bfa;
+      --purple-dim: rgba(167,139,250,0.12);
+      --radius: 10px;
+      --radius-sm: 7px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 10%, rgba(78,142,247,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 30% at 80% 90%, rgba(51,217,176,0.05) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .app {
+      display: flex;
+      gap: 1px;
+      width: 100%;
+      max-width: 760px;
+      background: var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px var(--border);
+    }
+
+    /* ── CALCULATOR ── */
+    .calc {
+      flex: 1;
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    /* Screen */
+    .screen {
+      padding: 20px 20px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .screen-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .angle-btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--border2);
+      background: transparent;
+      color: var(--text2);
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: all .2s;
+    }
+    .angle-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .angle-btn.rad { border-color: var(--teal); color: var(--teal); background: var(--teal-dim); }
+
+    .expr-display {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--text3);
+      text-align: right;
+      min-height: 16px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      letter-spacing: 0.02em;
+    }
+
+    .main-display {
+      font-family: 'DM Mono', monospace;
+      font-size: 2.4rem;
+      font-weight: 300;
+      color: var(--text);
+      text-align: right;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      word-break: break-all;
+      min-height: 52px;
+      transition: color .15s;
+    }
+    .main-display.error { color: var(--red); }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab {
+      flex: 1;
+      padding: 9px 4px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      text-align: center;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      color: var(--text3);
+      transition: all .2s;
+      letter-spacing: 0.03em;
+      position: relative;
+    }
+    .tab::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 20%; right: 20%;
+      height: 2px;
+      background: var(--blue);
+      border-radius: 2px 2px 0 0;
+      opacity: 0;
+      transition: opacity .2s;
+    }
+    .tab:hover { color: var(--text2); }
+    .tab.active { color: var(--blue); }
+    .tab.active::after { opacity: 1; }
+
+    /* Key grids */
+    .keys-wrap { padding: 12px; flex: 1; }
+
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+    .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+
+    .key {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      min-height: 46px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--surface2);
+      color: var(--text);
+      transition: background .12s, border-color .12s, transform .08s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px;
+      line-height: 1.2;
+      text-align: center;
+      user-select: none;
+    }
+    .key:hover { background: var(--surface3); border-color: var(--border2); }
+    .key:active { transform: scale(0.95); }
+
+    .key.span2 { grid-column: span 2; }
+    .key.span5 { grid-column: span 5; }
+
+    .key.op {
+      background: var(--blue-dim);
+      border-color: rgba(78,142,247,0.2);
+      color: var(--blue);
+    }
+    .key.op:hover { background: rgba(78,142,247,0.22); }
+
+    .key.fn {
+      font-size: 11.5px;
+      background: var(--teal-dim);
+      border-color: rgba(51,217,176,0.18);
+      color: var(--teal);
+    }
+    .key.fn:hover { background: rgba(51,217,176,0.2); }
+
+    .key.clear {
+      background: var(--red-dim);
+      border-color: rgba(247,110,110,0.2);
+      color: var(--red);
+    }
+    .key.clear:hover { background: rgba(247,110,110,0.22); }
+
+    .key.eq {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff;
+      font-size: 20px;
+      font-weight: 400;
+    }
+    .key.eq:hover { background: #6ba0f9; }
+
+    .key.const-key {
+      flex-direction: column;
+      gap: 2px;
+      min-height: 52px;
+      background: var(--purple-dim);
+      border-color: rgba(167,139,250,0.18);
+    }
+    .key.const-key:hover { background: rgba(167,139,250,0.2); }
+    .key.const-key .sym { font-size: 15px; font-weight: 500; color: var(--purple); }
+    .key.const-key .lbl { font-size: 9.5px; color: var(--text3); font-weight: 400; }
+
+    .gap-top { margin-top: 7px; }
+
+    /* ── HISTORY ── */
+    .history {
+      width: 210px;
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .hist-head {
+      padding: 12px 14px 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .hist-title {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text3);
+    }
+
+    .hist-clear {
+      font-size: 11px;
+      color: var(--text3);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px 7px;
+      border-radius: 4px;
+      transition: all .15s;
+    }
+    .hist-clear:hover { background: var(--red-dim); color: var(--red); }
+
+    .hist-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border2) transparent;
+    }
+
+    .hist-list::-webkit-scrollbar { width: 4px; }
+    .hist-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+    .hist-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      height: 120px;
+      color: var(--text3);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .hist-item {
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      margin-bottom: 5px;
+      border: 1px solid transparent;
+      transition: all .15s;
+    }
+    .hist-item:hover {
+      background: var(--surface2);
+      border-color: var(--border);
+    }
+
+    .hist-expr {
+      font-family: 'DM Mono', monospace;
+      font-size: 10.5px;
+      color: var(--text3);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-bottom: 3px;
+    }
+
+    .hist-result {
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--text);
+      text-align: right;
+    }
+
+    .hist-time {
+      font-size: 9px;
+      color: var(--text3);
+      margin-top: 2px;
+      text-align: right;
+    }
+
+    /* Responsive */
+    @media (max-width: 580px) {
+      body { padding: .75rem; align-items: flex-start; }
+      .app { flex-direction: column; max-width: 100%; }
+      .history { width: 100%; max-height: 200px; }
+      .hist-list { max-height: 140px; }
+      .key { min-height: 42px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="calc">
+      <div class="screen">
+        <div class="screen-top">
+          <button class="angle-btn" id="angleBtn" onclick="toggleAngle()">DEG</button>
+          <div class="expr-display" id="exprLine"></div>
+        </div>
+        <div class="main-display" id="display">0</div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" onclick="setMode('basic')">Cơ bản</button>
+        <button class="tab" onclick="setMode('sci')">Khoa học</button>
+        <button class="tab" onclick="setMode('const')">Hằng số</button>
+      </div>
+
+      <div class="keys-wrap" id="keysArea"></div>
+    </div>
+
+    <div class="history">
+      <div class="hist-head">
+        <span class="hist-title">Lịch sử</span>
+        <button class="hist-clear" onclick="clearHistory()">Xóa</button>
+      </div>
+      <div class="hist-list" id="histList">
+        <div class="hist-empty">
+          <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path d="M12 8v4l3 3M3.05 11a9 9 0 1 0 .5-3M3 4v4h4"/>
+          </svg>
+          Chưa có phép tính
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const gcd=(a,b)=>{a=a<0n?-a:a;b=b<0n?-b:b;while(b!==0n)[a,b]=[b,a%b];return a};
+class Fraction{
+  constructor(n,d=1n){
+    if(d===0n)throw new Error('Chia cho 0');
+    let num=BigInt(n),den=BigInt(d);
+    if(den<0n){num=-num;den=-den}
+    const g=gcd(num,den);this.n=num/g;this.d=den/g;
+  }
+  static fromDecimal(t){
+    const s=t.trim(),neg=s.startsWith('-'),raw=neg?s.slice(1):s;
+    const[w,f='']= raw.split('.');
+    const digits=`${w||'0'}${f}`.replace(/^0+(?=\d)/,'')||'0';
+    const den=10n**BigInt(f.length),num=BigInt(digits)*(neg?-1n:1n);
+    return new Fraction(num,den);
+  }
+  add(o){return new Fraction(this.n*o.d+o.n*this.d,this.d*o.d)}
+  sub(o){return new Fraction(this.n*o.d-o.n*this.d,this.d*o.d)}
+  mul(o){return new Fraction(this.n*o.n,this.d*o.d)}
+  div(o){if(o.n===0n)throw new Error('Chia cho 0');return new Fraction(this.n*o.d,this.d*o.n)}
+  toString(max=14){
+    const sign=this.n<0n?'-':'';
+    let n=this.n<0n?-this.n:this.n;const d=this.d;
+    const ip=n/d;let rem=n%d;
+    if(rem===0n)return`${sign}${ip}`;
+    let frac='';for(let i=0;i<max&&rem!==0n;i++){rem*=10n;frac+=(rem/d).toString();rem%=d;}
+    frac=frac.replace(/0+$/,'');return`${sign}${ip}.${frac||'0'}`;
+  }
+}
+
+let expr='0',justCalc=false,angleMode='deg',curMode='basic',history=[];
+const $display=document.getElementById('display');
+const $expr=document.getElementById('exprLine');
+const ops=new Set(['+','-','*','/']);
+const prec={'+':1,'-':1,'*':2,'/':2};
+
+function toRad(x){return angleMode==='deg'?x*Math.PI/180:x}
+function fmt(n){
+  if(typeof n!=='number')return String(n);
+  if(!isFinite(n))return'Lỗi';
+  if(Number.isInteger(n)&&Math.abs(n)<1e15)return n.toString();
+  return parseFloat(n.toPrecision(13)).toString();
+}
+
+function tokenize(input){
+  const tokens=[];let cur='';
+  for(let i=0;i<input.length;i++){
+    const c=input[i];
+    if(/[\d.]/.test(c)){cur+=c;continue}
+    if(ops.has(c)){
+      const unary=c==='-'&&(tokens.length===0||ops.has(tokens[tokens.length-1]));
+      if(unary){cur+=c;continue}
+      if(cur!==''){tokens.push(cur);cur=''}
+      tokens.push(c);
+    }
+  }
+  if(cur!=='')tokens.push(cur);return tokens;
+}
+function applyOp(l,op,r){
+  if(op==='+')return l.add(r);if(op==='-')return l.sub(r);
+  if(op==='*')return l.mul(r);if(op==='/')return l.div(r);
+}
+function evalBasic(input){
+  const tokens=tokenize(input);if(!tokens.length)return'0';
+  const vals=[],opst=[];
+  for(const t of tokens){
+    if(!ops.has(t)){vals.push(Fraction.fromDecimal(t));continue}
+    while(opst.length&&prec[opst[opst.length-1]]>=prec[t]){
+      const op=opst.pop(),r=vals.pop(),l=vals.pop();vals.push(applyOp(l,op,r));
+    }
+    opst.push(t);
+  }
+  while(opst.length){const op=opst.pop(),r=vals.pop(),l=vals.pop();vals.push(applyOp(l,op,r))}
+  return vals[0].toString();
+}
+
+function applyFn(fn,val){
+  const v=parseFloat(val);
+  const tab={
+    sin:()=>fmt(Math.sin(toRad(v))),
+    cos:()=>fmt(Math.cos(toRad(v))),
+    tan:()=>fmt(Math.tan(toRad(v))),
+    asin:()=>fmt(angleMode==='deg'?Math.asin(v)*180/Math.PI:Math.asin(v)),
+    acos:()=>fmt(angleMode==='deg'?Math.acos(v)*180/Math.PI:Math.acos(v)),
+    atan:()=>fmt(angleMode==='deg'?Math.atan(v)*180/Math.PI:Math.atan(v)),
+    ln:()=>fmt(Math.log(v)),
+    log:()=>fmt(Math.log10(v)),
+    log2:()=>fmt(Math.log2(v)),
+    sqrt:()=>fmt(Math.sqrt(v)),
+    cbrt:()=>fmt(Math.cbrt(v)),
+    sq:()=>fmt(v*v),
+    cube:()=>fmt(v*v*v),
+    inv:()=>fmt(1/v),
+    exp:()=>fmt(Math.exp(v)),
+    fact:()=>{let r=1;for(let i=2;i<=Math.round(v);i++)r*=i;return fmt(r)},
+    abs:()=>fmt(Math.abs(v)),
+    floor:()=>fmt(Math.floor(v)),
+    ceil:()=>fmt(Math.ceil(v)),
+    round:()=>fmt(Math.round(v)),
+    '10x':()=>fmt(Math.pow(10,v)),
+    '2x':()=>fmt(Math.pow(2,v)),
+    pct:()=>fmt(v/100),
+  };
+  return(tab[fn]||(() => val))();
+}
+
+function updateDisplay(){
+  $display.textContent=expr||'0';
+  $display.classList.toggle('error',expr==='Lỗi');
+}
+function canDot(){const p=expr.split(/[+\-*/]/);return!p[p.length-1].includes('.')}
+
+function inp(v){
+  if(justCalc&&/[\d.]/.test(v)){expr='';justCalc=false}
+  else if(justCalc&&ops.has(v)){justCalc=false}
+  else justCalc=false;
+  if(/\d/.test(v))expr=expr==='0'?v:expr+v;
+  else if(v==='.'){if(canDot()){const l=expr.at(-1);expr+=ops.has(l)?'0.':'.'}}
+  else if(ops.has(v)){const l=expr.at(-1);if(ops.has(l))expr=expr.slice(0,-1)+v;else expr+=v}
+  updateDisplay();$expr.textContent='';
+}
+
+function doFn(fn,label){
+  if(expr==='Lỗi')return;
+  const old=expr,result=applyFn(fn,expr);
+  $expr.textContent=`${label}(${old}) =`;
+  addHistory(`${label}(${old})`,result);
+  expr=result;justCalc=true;updateDisplay();
+}
+
+function calculate(){
+  if(expr==='Lỗi'){expr='0';updateDisplay();return}
+  try{
+    const safe=ops.has(expr.at(-1))?expr.slice(0,-1):expr;
+    const result=evalBasic(safe);
+    $expr.textContent=safe+' =';
+    addHistory(safe,result);
+    expr=result;justCalc=true;updateDisplay();
+  }catch(e){expr='Lỗi';justCalc=true;updateDisplay()}
+}
+
+function clearAll(){expr='0';justCalc=false;$expr.textContent='';updateDisplay()}
+function backspace(){
+  if(expr.length<=1||expr==='Lỗi')expr='0';else expr=expr.slice(0,-1);
+  justCalc=false;updateDisplay();
+}
+function negate(){
+  if(expr!=='0'&&expr!=='Lỗi'){
+    expr=expr.startsWith('-')?expr.slice(1):'-'+expr;updateDisplay();
+  }
+}
+function insertConst(v){
+  if(justCalc){expr='';justCalc=false}
+  expr=(expr==='0'?'':expr)+v;updateDisplay();$expr.textContent='';
+}
+function toggleAngle(){
+  angleMode=angleMode==='deg'?'rad':'deg';
+  const b=document.getElementById('angleBtn');
+  b.textContent=angleMode.toUpperCase();
+  b.classList.toggle('rad',angleMode==='rad');
+}
+
+function now(){
+  const d=new Date();
+  return`${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+}
+function addHistory(e,r){
+  history.unshift({expr:e,result:r,time:now()});
+  if(history.length>60)history.pop();
+  renderHistory();
+}
+function clearHistory(){history=[];renderHistory()}
+function renderHistory(){
+  const el=document.getElementById('histList');
+  if(!history.length){
+    el.innerHTML=`<div class="hist-empty">
+      <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+        <path d="M12 8v4l3 3M3.05 11a9 9 0 1 0 .5-3M3 4v4h4"/>
+      </svg>Chưa có phép tính</div>`;
+    return;
+  }
+  el.innerHTML=history.map((h,i)=>`
+    <div class="hist-item" onclick="useHistory(${i})">
+      <div class="hist-expr">${escHtml(h.expr)}</div>
+      <div class="hist-result">= ${escHtml(h.result)}</div>
+      <div class="hist-time">${h.time}</div>
+    </div>`).join('');
+}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function useHistory(i){expr=history[i].result;justCalc=true;updateDisplay()}
+
+/* ── KEY LAYOUTS ── */
+function btn(label,cls,action,extra=''){
+  return`<button class="key ${cls}" onclick="${action}" ${extra}>${label}</button>`;
+}
+
+function renderKeys(){
+  const el=document.getElementById('keysArea');
+  if(curMode==='basic'){
+    el.innerHTML=`<div class="grid-4">
+      ${btn('AC','clear','clearAll()')}
+      ${btn('⌫','','backspace()')}
+      ${btn('+/−','','negate()')}
+      ${btn('÷','op',"inp('/')")}
+      ${btn('7','','inp(\'7\')')}${btn('8','','inp(\'8\')')}${btn('9','','inp(\'9\')')}
+      ${btn('×','op',"inp('*')")}
+      ${btn('4','','inp(\'4\')')}${btn('5','','inp(\'5\')')}${btn('6','','inp(\'6\')')}
+      ${btn('−','op',"inp('-')")}
+      ${btn('1','','inp(\'1\')')}${btn('2','','inp(\'2\')')}${btn('3','','inp(\'3\')')}
+      ${btn('=','eq row2','calculate()','style="grid-row:span 2"')}
+      ${btn('0','span2','inp(\'0\')')}
+      ${btn('.','','inp(\'.\')' )}
+    </div>`;
+  } else if(curMode==='sci'){
+    el.innerHTML=`<div class="grid-5">
+      ${btn('sin','fn','doFn(\'sin\',\'sin\')')}
+      ${btn('cos','fn','doFn(\'cos\',\'cos\')')}
+      ${btn('tan','fn','doFn(\'tan\',\'tan\')')}
+      ${btn('sin⁻¹','fn','doFn(\'asin\',\'sin⁻¹\')')}
+      ${btn('cos⁻¹','fn','doFn(\'acos\',\'cos⁻¹\')')}
+      ${btn('ln','fn','doFn(\'ln\',\'ln\')')}
+      ${btn('log','fn','doFn(\'log\',\'log\')')}
+      ${btn('log₂','fn','doFn(\'log2\',\'log₂\')')}
+      ${btn('√x','fn','doFn(\'sqrt\',\'√\')')}
+      ${btn('∛x','fn','doFn(\'cbrt\',\'∛\')')}
+      ${btn('eˣ','fn','doFn(\'exp\',\'eˣ\')')}
+      ${btn('10ˣ','fn','doFn(\'10x\',\'10ˣ\')')}
+      ${btn('x²','fn','doFn(\'sq\',\'x²\')')}
+      ${btn('x³','fn','doFn(\'cube\',\'x³\')')}
+      ${btn('n!','fn','doFn(\'fact\',\'n!\')')}
+      ${btn('|x|','fn','doFn(\'abs\',\'|x|\')')}
+      ${btn('⌊x⌋','fn','doFn(\'floor\',\'⌊⌋\')')}
+      ${btn('⌈x⌉','fn','doFn(\'ceil\',\'⌈⌉\')')}
+      ${btn('1/x','fn','doFn(\'inv\',\'1/x\')')}
+      ${btn('%','fn','doFn(\'pct\',\'%\')')}
+    </div>
+    <div class="grid-5 gap-top">
+      ${btn('AC','clear','clearAll()')}
+      ${btn('⌫','','backspace()')}
+      ${btn('+/−','','negate()')}
+      ${btn('÷','op',"inp('/')")}
+      ${btn('×','op',"inp('*')")}
+      ${btn('7','','inp(\'7\')')}${btn('8','','inp(\'8\')')}${btn('9','','inp(\'9\')')}
+      ${btn('−','op',"inp('-')")}
+      ${btn('+','op',"inp('+')")}
+      ${btn('4','','inp(\'4\')')}${btn('5','','inp(\'5\')')}${btn('6','','inp(\'6\')')}
+      ${btn('1','','inp(\'1\')')}${btn('2','','inp(\'2\')')}
+      ${btn('3','','inp(\'3\')')}${btn('0','','inp(\'0\')')}
+      ${btn('.','','inp(\'.\')')}
+      ${btn('=','eq span2','calculate()')}
+    </div>`;
+  } else {
+    const consts=[
+      {sym:'π',lbl:'Pi',v:'3.14159265358979'},
+      {sym:'e',lbl:'Euler',v:'2.71828182845905'},
+      {sym:'φ',lbl:'Tỉ lệ vàng',v:'1.61803398874989'},
+      {sym:'√2',lbl:'Căn 2',v:'1.41421356237310'},
+      {sym:'√3',lbl:'Căn 3',v:'1.73205080756888'},
+      {sym:'√5',lbl:'Căn 5',v:'2.23606797749979'},
+      {sym:'γ',lbl:'Euler–Mascheroni',v:'0.57721566490153'},
+      {sym:'ln2',lbl:'ln(2)',v:'0.69314718055995'},
+      {sym:'ln10',lbl:'ln(10)',v:'2.30258509299405'},
+      {sym:'1/e',lbl:'1/e',v:'0.36787944117144'},
+      {sym:'g',lbl:'Gia tốc g',v:'9.80665'},
+      {sym:'c',lbl:'Tốc độ sáng',v:'299792458'},
+    ];
+    el.innerHTML=`<div class="grid-3">
+      ${consts.map(c=>`<button class="key const-key" onclick="insertConst('${c.v}')">
+        <span class="sym">${c.sym}</span>
+        <span class="lbl">${c.lbl}</span>
+      </button>`).join('')}
+    </div>
+    <div class="grid-4 gap-top">
+      ${btn('AC','clear','clearAll()')}
+      ${btn('⌫','','backspace()')}
+      ${btn('÷','op',"inp('/')")}
+      ${btn('×','op',"inp('*')")}
+      ${btn('7','','inp(\'7\')')}${btn('8','','inp(\'8\')')}${btn('9','','inp(\'9\')')}
+      ${btn('−','op',"inp('-')")}
+      ${btn('4','','inp(\'4\')')}${btn('5','','inp(\'5\')')}${btn('6','','inp(\'6\')')}
+      ${btn('+','op',"inp('+')")}
+      ${btn('1','','inp(\'1\')')}${btn('2','','inp(\'2\')')}${btn('3','','inp(\'3\')')}
+      ${btn('=','eq','calculate()','style="grid-row:span 2"')}
+      ${btn('0','span2','inp(\'0\')')}
+      ${btn('.','','inp(\'.\')')}
+    </div>`;
+  }
+}
+
+function setMode(m){
+  curMode=m;
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['basic','sci','const'][i]===m));
+  renderKeys();
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  if(/\d/.test(e.key))inp(e.key);
+  else if(e.key==='.')inp('.');
+  else if(e.key==='Enter'||e.key==='=')calculate();
+  else if(e.key==='Backspace')backspace();
+  else if(e.key==='Escape')clearAll();
+  else if(e.key==='+')inp('+');
+  else if(e.key==='-')inp('-');
+  else if(e.key==='*'||e.key.toLowerCase()==='x')inp('*');
+  else if(e.key==='/')inp('/');
+  else if(e.key==='%')doFn('pct','%');
+});
+
+renderKeys();
+</script>
+</body>
+</html>
