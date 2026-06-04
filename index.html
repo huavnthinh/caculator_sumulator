@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modern Calculator</title>
+  <style>
+    :root {
+      --bg: #0a0d14;
+      --panel: #121826;
+      --screen: #0f1522;
+      --key: #1a2234;
+      --key-hover: #24314b;
+      --op: #00c2ff;
+      --accent: #57f287;
+      --text: #e8efff;
+      --muted: #9fb1d1;
+      --danger: #ff4d6d;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(circle at top, #11192b, var(--bg));
+      color: var(--text);
+    }
+
+    .calculator {
+      width: min(100%, 360px);
+      background: color-mix(in srgb, var(--panel), black 10%);
+      border: 1px solid #222c41;
+      border-radius: 18px;
+      box-shadow: 0 22px 50px rgba(0, 0, 0, 0.45);
+      padding: 16px;
+    }
+
+    .screen {
+      background: var(--screen);
+      border: 1px solid #222c41;
+      border-radius: 12px;
+      min-height: 92px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: flex-end;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+      font-size: clamp(1.8rem, 6vw, 2.3rem);
+      font-variant-numeric: tabular-nums;
+      overflow-wrap: anywhere;
+      word-break: break-all;
+      color: var(--text);
+    }
+
+    .keys {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      min-height: 60px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--key);
+      cursor: pointer;
+      transition: transform 0.08s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    button:hover {
+      background: var(--key-hover);
+      box-shadow: 0 0 0 1px #32405d;
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    .op { background: color-mix(in srgb, var(--op), #10253f 80%); }
+    .equal { background: color-mix(in srgb, var(--accent), #11271d 75%); color: #061a10; }
+    .clear { background: color-mix(in srgb, var(--danger), #2c1420 78%); }
+    .span-2 { grid-column: span 2; }
+
+    @media (max-width: 420px) {
+      .calculator { padding: 12px; border-radius: 14px; }
+      .screen { min-height: 82px; }
+      button { min-height: 54px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="calculator" aria-label="Calculator">
+    <section class="screen" id="display" aria-live="polite">0</section>
+
+    <section class="keys">
+      <button class="clear" data-action="clear">AC</button>
+      <button data-action="backspace">⌫</button>
+      <button class="op" data-value="/">÷</button>
+      <button class="op" data-value="*">×</button>
+
+      <button data-value="7">7</button>
+      <button data-value="8">8</button>
+      <button data-value="9">9</button>
+      <button class="op" data-value="-">−</button>
+
+      <button data-value="4">4</button>
+      <button data-value="5">5</button>
+      <button data-value="6">6</button>
+      <button class="op" data-value="+">+</button>
+
+      <button data-value="1">1</button>
+      <button data-value="2">2</button>
+      <button data-value="3">3</button>
+      <button class="equal" data-action="equals">=</button>
+
+      <button class="span-2" data-value="0">0</button>
+      <button data-value=".">.</button>
+    </section>
+  </main>
+
+  <script>
+    const display = document.getElementById('display');
+    const keys = document.querySelector('.keys');
+    let expression = '0';
+
+    const gcd = (a, b) => {
+      a = a < 0n ? -a : a;
+      b = b < 0n ? -b : b;
+      while (b !== 0n) [a, b] = [b, a % b];
+      return a;
+    };
+
+    class Fraction {
+      constructor(n, d = 1n) {
+        if (d === 0n) throw new Error('Division by zero');
+        let num = BigInt(n);
+        let den = BigInt(d);
+        if (den < 0n) {
+          num = -num;
+          den = -den;
+        }
+        const g = gcd(num, den);
+        this.n = num / g;
+        this.d = den / g;
+      }
+
+      static fromDecimal(text) {
+        const str = text.trim();
+        const negative = str.startsWith('-');
+        const raw = negative ? str.slice(1) : str;
+        const [whole, frac = ''] = raw.split('.');
+        const digits = `${whole || '0'}${frac}`.replace(/^0+(?=\d)/, '') || '0';
+        const den = 10n ** BigInt(frac.length);
+        const num = BigInt(digits) * (negative ? -1n : 1n);
+        return new Fraction(num, den);
+      }
+
+      add(other) { return new Fraction(this.n * other.d + other.n * this.d, this.d * other.d); }
+      sub(other) { return new Fraction(this.n * other.d - other.n * this.d, this.d * other.d); }
+      mul(other) { return new Fraction(this.n * other.n, this.d * other.d); }
+      div(other) {
+        if (other.n === 0n) throw new Error('Division by zero');
+        return new Fraction(this.n * other.d, this.d * other.n);
+      }
+
+      toString(maxDigits = 16) {
+        const sign = this.n < 0n ? '-' : '';
+        let n = this.n < 0n ? -this.n : this.n;
+        const d = this.d;
+        const intPart = n / d;
+        let rem = n % d;
+        if (rem === 0n) return `${sign}${intPart}`;
+
+        let frac = '';
+        for (let i = 0; i < maxDigits && rem !== 0n; i++) {
+          rem *= 10n;
+          frac += (rem / d).toString();
+          rem %= d;
+        }
+        frac = frac.replace(/0+$/, '');
+        return `${sign}${intPart}.${frac || '0'}`;
+      }
+    }
+
+    const precedence = { '+': 1, '-': 1, '*': 2, '/': 2 };
+    const operators = new Set(Object.keys(precedence));
+
+    function tokenize(input) {
+      const tokens = [];
+      let current = '';
+
+      for (let i = 0; i < input.length; i++) {
+        const char = input[i];
+
+        if (/\d|\./.test(char)) {
+          current += char;
+          continue;
+        }
+
+        if (operators.has(char)) {
+          const unaryMinus = char === '-' && (tokens.length === 0 || operators.has(tokens[tokens.length - 1]));
+          if (unaryMinus) {
+            current += char;
+            continue;
+          }
+          if (current !== '') {
+            tokens.push(current);
+            current = '';
+          }
+          tokens.push(char);
+        }
+      }
+
+      if (current !== '') tokens.push(current);
+      return tokens;
+    }
+
+    function applyOp(left, op, right) {
+      if (op === '+') return left.add(right);
+      if (op === '-') return left.sub(right);
+      if (op === '*') return left.mul(right);
+      if (op === '/') return left.div(right);
+      throw new Error('Invalid operator');
+    }
+
+    function evaluateExpression(input) {
+      const tokens = tokenize(input);
+      if (!tokens.length) return '0';
+
+      const values = [];
+      const ops = [];
+
+      for (const token of tokens) {
+        if (!operators.has(token)) {
+          values.push(Fraction.fromDecimal(token));
+          continue;
+        }
+
+        while (ops.length && precedence[ops[ops.length - 1]] >= precedence[token]) {
+          const op = ops.pop();
+          const right = values.pop();
+          const left = values.pop();
+          values.push(applyOp(left, op, right));
+        }
+        ops.push(token);
+      }
+
+      while (ops.length) {
+        const op = ops.pop();
+        const right = values.pop();
+        const left = values.pop();
+        values.push(applyOp(left, op, right));
+      }
+
+      return values[0].toString();
+    }
+
+    function updateDisplay() {
+      display.textContent = expression || '0';
+    }
+
+    function canAddDecimal() {
+      const pieces = expression.split(/[-+*/]/);
+      const current = pieces[pieces.length - 1];
+      return !current.includes('.');
+    }
+
+    function inputValue(value) {
+      if (/\d/.test(value)) {
+        expression = expression === '0' ? value : expression + value;
+      } else if (value === '.') {
+        if (canAddDecimal()) {
+          const last = expression.at(-1);
+          expression += operators.has(last) ? '0.' : '.';
+        }
+      } else if (operators.has(value)) {
+        const last = expression.at(-1);
+        if (operators.has(last)) {
+          expression = expression.slice(0, -1) + value;
+        } else {
+          expression += value;
+        }
+      }
+      updateDisplay();
+    }
+
+    function clearAll() {
+      expression = '0';
+      updateDisplay();
+    }
+
+    function backspace() {
+      if (expression.length <= 1) {
+        expression = '0';
+      } else {
+        expression = expression.slice(0, -1);
+      }
+      updateDisplay();
+    }
+
+    function calculate() {
+      try {
+        const last = expression.at(-1);
+        const safeExpression = operators.has(last) ? expression.slice(0, -1) : expression;
+        expression = evaluateExpression(safeExpression);
+      } catch {
+        expression = 'Error';
+      }
+      updateDisplay();
+    }
+
+    keys.addEventListener('click', (event) => {
+      const button = event.target.closest('button');
+      if (!button) return;
+
+      const { action, value } = button.dataset;
+      if (action === 'clear') return clearAll();
+      if (action === 'backspace') return backspace();
+      if (action === 'equals') return calculate();
+      if (value) return inputValue(value);
+    });
+
+    document.addEventListener('keydown', (event) => {
+      const { key } = event;
+      if (/\d/.test(key)) return inputValue(key);
+      if (key === '.') return inputValue('.');
+      if (key === 'Enter' || key === '=') return calculate();
+      if (key === 'Backspace') return backspace();
+      if (key === 'Escape') return clearAll();
+      if (key === 'x' || key === 'X') return inputValue('*');
+      if (operators.has(key)) return inputValue(key);
+    });
+
+    updateDisplay();
+  </script>
+</body>
+</html>
